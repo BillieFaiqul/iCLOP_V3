@@ -9,8 +9,6 @@ class TemporaryFile extends Model
 {
     use HasFactory;
 
-    protected $connection = 'nodejsDB';
-
     protected $fillable = [
         'folder_path',
         'file_name',

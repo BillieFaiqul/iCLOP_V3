@@ -26,7 +26,7 @@
         </div>
         <div>
             <img class="w-40 mx-auto my-4" src="{{$project->getImageAttribute()}}" alt="Project {{$project->title}}"
-                onerror="this.onerror=null;this.src='{{asset('placeholder.png')}}';">
+                onerror="this.onerror=null;this.src='{{ asset('assets/nodejs/placeholder.png') }}';">
         </div>
     </div>
 </div>

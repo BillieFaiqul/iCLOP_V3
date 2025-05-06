@@ -9,8 +9,6 @@ class ProjectExecutionStep extends Model
 {
     use HasFactory;
 
-    protected $connection = 'nodejsDB';
-
     protected $fillable = [
         'project_id',
         'execution_step_id',

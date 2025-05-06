@@ -15,13 +15,13 @@ class DashboardController extends Controller
         $user = $request->user();
         $projects = Project::skip(0)->take(3)->get();
         if ($request->ajax()) {
-            $data = DB::connection('nodejsDB')->table('projects')
+            $data = DB::table('projects')
                 ->select('projects.id', 'projects.title', DB::raw('COUNT(submissions.id) as submission_count'))
                 ->leftJoin('submissions', function ($join) use ($user) {
                     $join->on('projects.id', '=', 'submissions.project_id')
                         ->where('submissions.user_id', '=', $user->id);
                 })
-                ->groupBy('projects.id');
+                ->groupBy('projects.id', 'projects.title');
 
 
             return Datatables::of($data)

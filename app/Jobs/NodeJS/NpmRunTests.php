@@ -47,19 +47,69 @@ class NpmRunTests implements ShouldQueue
                 Log::info("Running {$command_string} in folder {$this->tempDir}");
                 $this->updateSubmissionTestsResultsStatus($command_string, $submission, Submission::$PROCESSING, "Running");
                 usleep(100000);
-                $process = new Process($command, $this->tempDir, null, null, 120);
-                $process->start();
-                $process_pid = $process->getPid();
-                $process->wait();
+                $env = [
+                    'PATH' => config('app.process_path') . ':' . getenv('PATH'),
+                ];
+
+                $process = new Process($command, $this->tempDir, $env, null, 120);
+                $process->setTty(false);
+                $process->setPty(false);
+                $output = '';
+                $errorOutput = '';
+
+                $process->run(function ($type, $buffer) use (&$output, &$errorOutput) {
+                    if (Process::OUT === $type) {
+                        $output .= $buffer;
+                    } else {
+                        $errorOutput .= $buffer;
+                    }
+                });
+
+                $fullOutput = trim($output . "\n" . $errorOutput);
+
+                $passedTests = null;
+                $totalTests = null;
+                $failedTests = null;
+
+                // Handle format: "Tests: X failed, Y passed, Z total"
+                if (preg_match('/Tests:\s+(\d+)\s+failed,\s+(\d+)\s+passed,\s+(\d+)\s+total/', $fullOutput, $matches)) {
+                    $failedTests = (int)$matches[1];
+                    $passedTests = (int)$matches[2];
+                    $totalTests = (int)$matches[3];
+                    Log::info("Extracted test metrics: $failedTests failed, $passedTests passed, $totalTests total");
+                }
+                // Handle format: "Tests: X passed, Y total"
+                else if (preg_match('/Tests:\s+(\d+)\s+passed,\s+(\d+)\s+total/', $fullOutput, $matches)) {
+                    $passedTests = (int)$matches[1];
+                    $totalTests = (int)$matches[2];
+                    $failedTests = $totalTests - $passedTests;
+                    Log::info("Extracted test metrics: $passedTests passed, $totalTests total");
+                }
+
                 if ($process->isSuccessful()) {
                     $pass_all[$key] = true;
-                    Log::info("{$command_string} in folder {$this->tempDir}");
-                    $this->updateSubmissionTestsResultsStatus($command_string, $submission, Submission::$COMPLETED, "Completed");
+                    Log::info("{$command_string} completed in folder {$this->tempDir}");
+                    $this->updateSubmissionTestsResultsStatus(
+                        $command_string,
+                        $submission,
+                        Submission::$COMPLETED,
+                        $fullOutput,
+                        $passedTests,
+                        $totalTests,
+                        $failedTests
+                    );
                 } else {
                     $pass_all[$key] = false;
-                    Log::error("Failed to NPM run test {$command_string} "   . $process->getErrorOutput());
-                    $this->updateSubmissionTestsResultsStatus($command_string, $submission, Submission::$FAILED, $process->getErrorOutput());
-                    Process::fromShellCommandline('kill ' . $process_pid)->run();
+                    Log::error("Failed to NPM run test {$command_string}");
+                    $this->updateSubmissionTestsResultsStatus(
+                        $command_string,
+                        $submission,
+                        Submission::$FAILED,
+                        $fullOutput,
+                        $passedTests,
+                        $totalTests,
+                        $failedTests
+                    );
                 }
             }
             if (in_array(false, $pass_all) == false) {
@@ -77,10 +127,17 @@ class NpmRunTests implements ShouldQueue
         }
     }
 
-    private function updateSubmissionTestsResultsStatus($testName, Submission $submission, string $status, string $output): void
-    {
+    private function updateSubmissionTestsResultsStatus(
+        $testName,
+        Submission $submission,
+        string $status,
+        string $output,
+        ?int $passedTests = null,
+        ?int $totalTests = null,
+        ?int $failedTests = null
+    ): void {
         $stepName = ExecutionStep::$NPM_RUN_TESTS;
-        $submission->updateOneTestResult($stepName, $testName, $status, $output);
+        $submission->updateOneTestResult($stepName, $testName, $status, $output, $passedTests, $totalTests, $failedTests);
         if ($status != Submission::$COMPLETED) $submission->updateStatus($status);
     }
 

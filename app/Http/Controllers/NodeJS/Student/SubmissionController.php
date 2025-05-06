@@ -1,4 +1,4 @@
-.<?php
+<?php
 
 namespace App\Http\Controllers\NodeJS\Student;
 
@@ -32,17 +32,15 @@ class SubmissionController extends Controller
         $user = $request->user();
         $projects = Project::all();
         if ($request->ajax()) {
-            $data = DB::connection('nodejsDB')->table('projects')
+            $data = DB::table('projects')
                 ->select(
                     'projects.id',
                     'projects.title',
-                    // DB::raw('(SELECT COUNT(DISTINCT submissions.id) FROM submissions WHERE submissions.project_id = projects.id AND submissions.user_id = ?) as submission_count'),
                     DB::raw('(SELECT COUNT(*) FROM submission_histories INNER JOIN submissions ON submissions.id = submission_histories.submission_id WHERE submissions.project_id = projects.id AND submissions.user_id = ?) as attempts_count'),
                     DB::raw('(SELECT status FROM submissions WHERE submissions.project_id = projects.id AND submissions.user_id = ? ORDER BY id DESC LIMIT 1) as submission_status')
                 )
                 ->groupBy('projects.id', 'projects.title')
                 ->setBindings([
-                    // $user->id,
                     $user->id,
                     $user->id
                 ]);
@@ -50,7 +48,7 @@ class SubmissionController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('title', function ($row) {
-                    $title_button = '<a href="/nodejs/submissions/project/' . $row->id . '" class="underline text-secondary">' . $row->title . '</a>';
+                    $title_button = '<a href="submissions/project/' . $row->id . '" class="underline text-secondary">' . $row->title . '</a>';
                     return $title_button;
                 })
                 ->addColumn('submission_status', function ($row) {
@@ -64,29 +62,29 @@ class SubmissionController extends Controller
                     $submission = Submission::where('project_id', $row->id)->where('user_id', $user->id)->orderBy('id', 'DESC')->first();
                     $buttons = '
                     <div class="relative" x-data="{ open: false }" @click.outside="open = false" @close.stop="open = false">
-                    <div @click="open = ! open">
-                        <button
-                            class="flex items-center text-sm font-medium text-gray-900 hover:text-gray-500 dark:text-white dark:hover:text-gray-300 hover:underline">
-                            <svg class="ml-1 h-5 w-5 text-gray-500 dark:text-gray-400"
-                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                aria-hidden="true">
-                                <g id="Menu / Menu_Alt_02">
-                                    <path id="Vector" d="M11 17H19M5 12H19M11 7H19" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </g>
-                            </svg>
-                        </button>
-                    </div>
-                    <div x-show="open"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="transform opacity-0 scale-95"
-                        x-transition:enter-end="transform opacity-100 scale-100"
-                        x-transition:leave="transition ease-in duration-75"
-                        x-transition:leave-start="transform opacity-100 scale-100"
-                        x-transition:leave-end="transform opacity-0 scale-95"
-                        class="absolute z-50 mt-2 w-48 rounded-md shadow-lg origin-top"
-                        style="display: none;"
-                        @click="open = false">
+                        <div @click="open = ! open">
+                            <button
+                                class="flex items-center text-sm font-medium text-gray-900 hover:text-gray-500 dark:text-white dark:hover:text-gray-300 hover:underline">
+                                <svg class="ml-1 h-5 w-5 text-gray-500 dark:text-gray-400"
+                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                    aria-hidden="true">
+                                    <g id="Menu / Menu_Alt_02">
+                                        <path id="Vector" d="M11 17H19M5 12H19M11 7H19" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </g>
+                                </svg>
+                            </button>
+                        </div>
+                        <div x-show="open"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute z-50 mt-2 w-48 rounded-md shadow-lg origin-top"
+                            style="display: none;"
+                            @click="open = false">
                         <div class="rounded-md ring-1 ring-black ring-opacity-5 py-1 bg-white dark:bg-gray-700">
                     ';
                     if ($submission !== null) {
@@ -131,7 +129,7 @@ class SubmissionController extends Controller
 
             $file = $request->file('folder_path');
             $file_name = $file->getClientOriginalName();
-            $folder_path = 'public/nodejs/tmp/submissions/' . $request->user()->id . '/' . $project_title;
+            $folder_path = 'public/tmp/submissions/' . $request->user()->id . '/' . $project_title;
             $file->storeAs($folder_path, $file_name);
 
             TemporaryFile::create([
@@ -149,7 +147,7 @@ class SubmissionController extends Controller
 
         try {
             $request->validate([
-                'project_id' => 'required|exists:nodejsDB.projects,id',
+                'project_id' => 'required|exists:projects,id',
                 'folder_path' => 'required_without:github_url',
                 'github_url' => 'required_without:folder_path',
             ]);
@@ -171,7 +169,7 @@ class SubmissionController extends Controller
 
                 if ($temporary_file) {
                     $path = storage_path('app/' . $request->folder_path . '/' . $temporary_file->file_name);
-                    $submission->addMedia($path)->toMediaCollection('submissions', 'nodejs_public_submissions_files');
+                    $submission->addMedia($path)->toMediaCollection('submissions', 'public_submissions_files');
                     if ($this->is_dir_empty(storage_path('app/' . $request->folder_path))) {
                         rmdir(storage_path('app/' . $request->folder_path));
                     }
@@ -337,6 +335,14 @@ class SubmissionController extends Controller
                                 break;
                         }
                     }
+
+                    // Revalidate status before returning response to ensure consistency
+                    if ($isNotHistory && $submission->status === Submission::$PROCESSING) {
+                        // Force a fresh check of status based on current step results
+                        $submission->getCurrentExecutionStep();
+                        $completion_percentage = round($submission->getTotalCompletedSteps() / $submission->getTotalSteps() * 100);
+                    }
+
                     return $this->returnSubmissionResponse(
                         $isNotHistory ?  'Step ' . $step->executionStep->name . ' is ' . $submission->results->{$step->executionStep->name}->status : "History",
                         $submission->status,
@@ -345,6 +351,33 @@ class SubmissionController extends Controller
                         $completion_percentage
                     );
                 }
+
+                // If we get here, check one more time if submission should be marked as completed
+                if ($isNotHistory && $submission->status === Submission::$PROCESSING) {
+                    $allStepsComplete = true;
+                    $anyStepsFailed = false;
+
+                    foreach ($submission->getExecutionSteps() as $execStep) {
+                        $stepName = $execStep->executionStep->name;
+                        if (
+                            !isset($submission->results->$stepName) ||
+                            $submission->results->$stepName->status === Submission::$PENDING ||
+                            $submission->results->$stepName->status === Submission::$PROCESSING
+                        ) {
+                            $allStepsComplete = false;
+                            break;
+                        }
+
+                        if ($submission->results->$stepName->status === Submission::$FAILED) {
+                            $anyStepsFailed = true;
+                        }
+                    }
+
+                    if ($allStepsComplete) {
+                        $submission->updateStatus($anyStepsFailed ? Submission::$FAILED : Submission::$COMPLETED);
+                    }
+                }
+
                 return $this->returnSubmissionResponse(
                     ($isNotHistory ?  'Submission is processing meanwhile there is no step to execute' : "History"),
                     $submission->status,
@@ -399,7 +432,10 @@ class SubmissionController extends Controller
                 }
                 // Delete temp directory
                 foreach ($commands as $command) {
-                    $process = new Process($command, null, null, null, 120);
+                    $env = [
+                        'PATH' => config('app.process_path') . ':' . getenv('PATH'),
+                    ];
+                    $process = new Process($command, null, $env, null, 120);
                     $process->run();
                     if ($process->isSuccessful()) {
                         Log::info('Command ' . implode(" ", $command) . ' is successful');
@@ -429,7 +465,7 @@ class SubmissionController extends Controller
 
     private function getTempDir($submission)
     {
-        return storage_path('app/public/nodejs/tmp/submissions/' . $submission->user_id . '/' . $submission->project->title . '/' . $submission->id);
+        return storage_path('app/public/tmp/submissions/' . $submission->user_id . '/' . $submission->project->title . '/' . $submission->id);
     }
 
     private function is_dir_empty($dir)
@@ -502,33 +538,51 @@ class SubmissionController extends Controller
 
     private function lunchCopyTestsFolderJob($submission, $tempDir, $step)
     {
-        $testsDir = [
-            'testsDirApi' => $submission->project->getMedia('project_tests_api'),
-            'testsDirWeb' => $submission->project->getMedia('project_tests_web'),
-            'testsDirImage' => $submission->project->getMedia('project_tests_images'),
-        ];
-        // command 1: [1]cp [2]-r [3]{{testsDir}} [4]{{tempDir}}
+        $testFiles = $step->variables;
         $commands = $step->executionStep->commands;
-        $step_variables = $step->variables;
-        $values = ['{{testsDir}}' => $testsDir, '{{tempDir}}' => $tempDir];
-        $commands = $this->replaceCommandArraysWithValues($step_variables, $values, $step);
         $commandsArray = [];
-        foreach ($testsDir['testsDirApi'] as $key => $value) {
-            $commands[2] = $value->getPath();
-            $commands[3] = $tempDir . '/tests/api';
-            array_push($commandsArray, $commands);
+
+        $testDirPath = $tempDir . '/tests';
+        if (!is_dir($testDirPath)) {
+            mkdir($testDirPath, 0777, true);
         }
-        foreach ($testsDir['testsDirWeb'] as $key => $value) {
-            $commands[2] =  $value->getPath();
-            $commands[3] = $tempDir . '/tests/web';
-            array_push($commandsArray, $commands);
+
+        foreach ($testFiles as $testFile) {
+            // Parse {{sourceFile}}=media:filename:subfolder
+            $parts = explode("=", $testFile);
+
+            if (isset($parts[1])) {
+                // media:filename:subfolder -> [media, filename, subfolder]
+                $fileConfig = explode(":", $parts[1]);
+
+                $mediaCollection = isset($fileConfig[0]) ? $fileConfig[0] : 'tests';
+                $fileName = isset($fileConfig[1]) ? $fileConfig[1] : '';
+                $subFolder = isset($fileConfig[2]) ? $fileConfig[2] : '';
+
+                $mediaItem = $submission->project->getMedia('project_tests' . ($mediaCollection != 'tests' ? "_$mediaCollection" : ""))
+                    ->where('file_name', $fileName)
+                    ->first();
+
+                if ($mediaItem) {
+                    $destDir = $testDirPath;
+                    if (!empty($subFolder)) {
+                        $destDir .= '/' . $subFolder;
+                        if (!is_dir($destDir)) {
+                            mkdir($destDir, 0777, true);
+                        }
+                    }
+
+                    $copyCommand = $commands;
+                    $copyCommand[2] = $mediaItem->getPath();
+                    $copyCommand[3] = $destDir . '/' . basename($fileName);
+                    $commandsArray[] = $copyCommand;
+                } else {
+                    Log::warning("Test file not found: {$fileName} in collection project_tests_{$mediaCollection}");
+                }
+            }
         }
-        foreach ($testsDir['testsDirImage'] as $key => $value) {
-            $commands[2] =  $value->getPath();
-            $commands[3] = $tempDir . '/tests/web/images';
-            array_push($commandsArray, $commands);
-        }
-        dispatch(new CopyTestsFolder($submission, $testsDir, $tempDir, $commandsArray))->onQueue(ExecutionStep::$COPY_TESTS_FOLDER);
+
+        dispatch(new CopyTestsFolder($submission, null, $tempDir, $commandsArray))->onQueue(ExecutionStep::$COPY_TESTS_FOLDER);
     }
 
     private function lunchNpmInstallJob($submission, $tempDir, $step)
@@ -543,7 +597,7 @@ class SubmissionController extends Controller
     private function lunchNpmRunStartJob($submission, $tempDir, $step)
     {
         $commands = $step->executionStep->commands;
-        dispatch_sync(new NpmRunStart($submission, $tempDir, $commands));
+        dispatch(new NpmRunStart($submission, $tempDir, $commands));
     }
 
     private function lunchNpmRunTestsJob($submission, $tempDir, $step)
@@ -653,7 +707,7 @@ class SubmissionController extends Controller
         $user = Auth::user();
         $submission = Submission::where('id', $submission_id)->where('user_id', $user->id)->first();
         if ($submission) {
-            return view('nodejs.submissions.change_source_code', compact('submission'));
+            return view('submissions.change_source_code', compact('submission'));
         }
         return redirect()->route('submissions');
     }
@@ -662,7 +716,7 @@ class SubmissionController extends Controller
     {
         try {
             $request->validate([
-                'submission_id' => 'required|exists:nodejsDB.submissions,id',
+                'submission_id' => 'required|exists:submissions,id',
                 'folder_path' => 'required_without:github_url',
                 'github_url' => 'required_without:folder_path',
             ]);
@@ -693,7 +747,7 @@ class SubmissionController extends Controller
 
                 if ($temporary_file) {
                     $path = storage_path('app/' . $request->folder_path . '/' . $temporary_file->file_name);
-                    $submission->addMedia($path)->toMediaCollection('submissions', 'nodejs_public_submissions_files');
+                    $submission->addMedia($path)->toMediaCollection('submissions', 'public_submissions_files');
                     if ($this->is_dir_empty(storage_path('app/' . $request->folder_path))) {
                         rmdir(storage_path('app/' . $request->folder_path));
                     }

@@ -41,7 +41,10 @@ class NpmInstall implements ShouldQueue
         try {
             // processing
             // check if the module is already exist within the assets folder
-            $process = new Process($this->command, $this->tempDir, null, null, 120);
+            $env = [
+                'PATH' => config('app.process_path') . ':' . getenv('PATH'),
+            ];
+            $process = new Process($this->command, $this->tempDir, $env, null, 120);
             $process->start();
             $process_pid = $process->getPid();
             $process->wait();

@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\File;
 
 class CloneRepository implements ShouldQueue
 {
@@ -41,8 +42,10 @@ class CloneRepository implements ShouldQueue
         Log::info("Cloning repo {$this->repoUrl} into {$this->tempDir}");
         $this->updateSubmissionStatus($submission, Submission::$PROCESSING, "Cloning repo {$this->repoUrl}");
         try {
+            $this->prepareTempDirectory();
+
             // processing
-            $process = new Process($this->command);
+            $process = new Process($this->command, null, null, null, 500);
             $process->start();
             $process_pid = $process->getPid();
             $process->wait();
@@ -70,5 +73,16 @@ class CloneRepository implements ShouldQueue
         $stepName = ExecutionStep::$CLONE_REPOSITORY;
         if ($status != Submission::$PROCESSING) $submission->updateOneResult($stepName, $status, $output);
         if ($status != Submission::$COMPLETED) $submission->updateStatus($status);
+    }
+
+    private function prepareTempDirectory(): void
+    {
+        if (File::exists($this->tempDir)) {
+            File::deleteDirectory($this->tempDir);
+        }
+
+        File::ensureDirectoryExists(dirname($this->tempDir), 0755, true);
+
+        Log::info("Created temp directory {$this->tempDir}");
     }
 }

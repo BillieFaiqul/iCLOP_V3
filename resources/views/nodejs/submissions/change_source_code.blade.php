@@ -20,8 +20,7 @@
                         <div class="mt-4">
                             <x-input-label for="github_url" :value="__('Or Github Link')" />
                             <x-text-input id="github_url" class="block mt-1 w-full" type="text" name="github_url"
-                                :value="old('github_url')"
-                                placeholder="E.g. https://github.com/username/repository.git" />
+                                :value="old('github_url')" placeholder="E.g. https://github.com/username/repository.git" />
                             <x-input-error :messages="$errors->get('github_url')" class="mt-2" />
                         </div>
                         <div class="flex items-center justify-end mt-12">
@@ -53,16 +52,16 @@
                 url: url,
                 process: {
                     headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token()}}'
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
                 },
             },
             allowMultiple: false,
-            acceptedFileTypes: ['application/x-zip-compressed'],
+            acceptedFileTypes: ['application/x-zip-compressed', 'application/zip'],
             fileValidateTypeDetectType: (source, type) =>
                 new Promise((resolve, reject) => {
-                resolve(type);
-            }),    
+                    resolve(type);
+                }),
         });
         pond.on('addfile', function() {
             if (pond.getFiles().length > 0) {
@@ -77,16 +76,16 @@
                     url: url,
                     process: {
                         headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token()}}'
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         }
                     },
                 },
                 allowMultiple: false,
-                acceptedFileTypes: ['application/x-zip-compressed'],
+                acceptedFileTypes: ['application/x-zip-compressed', 'application/zip'],
                 fileValidateTypeDetectType: (source, type) =>
                     new Promise((resolve, reject) => {
-                    resolve(type);
-                }),    
+                        resolve(type);
+                    }),
             });
         });
 
@@ -103,16 +102,16 @@
                     url: url,
                     process: {
                         headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token()}}'
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         }
                     },
                 },
                 allowMultiple: false,
-                acceptedFileTypes: ['application/x-zip-compressed'],
+                acceptedFileTypes: ['application/x-zip-compressed', 'application/zip'],
                 fileValidateTypeDetectType: (source, type) =>
                     new Promise((resolve, reject) => {
-                    resolve(type);
-                }),    
+                        resolve(type);
+                    }),
             });
         });
 
@@ -120,8 +119,10 @@
 
         $('.filepond--credits').hide();
         $('.filepond--panel-root').addClass('bg-gray-900 ');
-        $('.filepond--drop-label').addClass('border-2 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-secondary-500 dark:focus:border-secondary-600 focus:ring-secondary-500 dark:focus:ring-secondary-600 rounded-md shadow-sm ');
-    
+        $('.filepond--drop-label').addClass(
+            'border-2 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-secondary-500 dark:focus:border-secondary-600 focus:ring-secondary-500 dark:focus:ring-secondary-600 rounded-md shadow-sm '
+            );
+
         $('form').on('submit', function(e) {
             e.preventDefault();
             if (pond.getFiles().length > 0) {
@@ -149,7 +150,8 @@
                                         button: "Ok",
                                     }).then(function() {
                                         const submission_id = data.submission.id;
-                                        window.location = "/nodejs/submissions/submission/" + submission_id;
+                                        window.location = "/nodejs/submissions/submission/" +
+                                            submission_id;
                                     });
                                 },
                                 error: function(data) {
@@ -203,7 +205,8 @@
                                         button: "Ok",
                                     }).then(function() {
                                         const submission_id = data.submission.id;
-                                        window.location = "/nodejs/submissions/submission/" + submission_id;
+                                        window.location = "/nodejs/submissions/submission/" +
+                                            submission_id;
                                     });
                                 },
                                 error: function(data) {
@@ -217,7 +220,7 @@
                                 }
                             });
                         }
-                    });  
+                    });
                 }
             }
         });

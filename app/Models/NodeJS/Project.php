@@ -11,8 +11,6 @@ class Project extends  Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
-    protected $connection = 'nodejsDB';
-
     protected $fillable = [
         'title',
         'description',

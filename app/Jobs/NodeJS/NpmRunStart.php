@@ -36,12 +36,14 @@ class NpmRunStart
      */
     public function handle(): void
     {
+        set_time_limit(60);
+
         $submission = $this->submission;
         $tempDir = $this->tempDir;
         $command = $this->command;
 
 
-        Log::info("NPM run start is processing in folder {$this->tempDir}");
+        Log::info("NPM run will run on folder {$this->tempDir}");
         $this->updateSubmissionStatus($submission, Submission::$PROCESSING, "NPM run start is processing");
         // Change port number in .env file
         $port = $this->getAvailablePort();
@@ -49,6 +51,7 @@ class NpmRunStart
             $this->updateSubmissionStatus($submission, Submission::$FAILED, "Failed to find an available port for the project");
             return;
         }
+        Log::info("NPM run start is processing on port $port");
         $submission->updatePort($port);
         // Change port number in .env file
         $envPath = "$tempDir/.env";
@@ -60,21 +63,23 @@ class NpmRunStart
 
         // Run NPM start command
         try {
-            $process = new Process($command, $tempDir, null, null, null);
+            $env = [
+                'PATH' => config('app.process_path') . ':' . getenv('PATH'),
+            ];
+            $process = new Process($command, $tempDir, $env, null, null);
             $process->start();
             $process->waitUntil(function ($type, $output) use ($port) {
-                return strpos($output, "Server started on port $port") !== false || strpos($output, "MongoNetworkError") !== false;
+                return strpos($output, "$port") !== false || strpos($output, "MongoNetworkError") !== false;
             }, 60000); // Wait for 60 seconds
 
-            if (strpos($process->getOutput(), "Server started on port $port") !== false) {
+            if (strpos($process->getOutput(), "$port") !== false) {
                 Log::info("NPM run start is completed in folder {$tempDir} the application is running on port $port");
                 $this->updateSubmissionStatus($submission, Submission::$COMPLETED, $process->getOutput());
-                $process->wait();
             } else {
                 Log::error("Failed to NPM run start in folder {$tempDir} due to error " .  $process->getOutput());
                 $this->updateSubmissionStatus($submission, Submission::$FAILED, "Failed to start application on port $port");
-                Process::fromShellCommandline("npx kill-port $port")->run();
             }
+            Process::fromShellCommandline("npx kill-port $port")->run();
         } catch (ProcessTimedOutException $th) {
             $process->stop();
             Log::error("Failed to NPM run start in folder {$tempDir} due to timeout " .  $process->getOutput());

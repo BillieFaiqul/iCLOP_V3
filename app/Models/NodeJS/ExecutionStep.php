@@ -9,8 +9,6 @@ class ExecutionStep extends Model
 {
     use HasFactory;
 
-    protected $connection = 'nodejsDB';
-
     protected $fillable = [
         'name',
         'commands',

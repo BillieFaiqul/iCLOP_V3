@@ -8,9 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class SubmissionHistory extends Model
 {
     use HasFactory;
-
-    protected $connection = 'nodejsDB';
-
     static $types = ['file', 'url'];
     static $statues =  ['pending', 'processing', 'completed', 'failed'];
     static $FILE = 'file';

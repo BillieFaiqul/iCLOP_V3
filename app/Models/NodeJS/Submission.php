@@ -10,9 +10,6 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class Submission extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
-
-    protected $connection = 'nodejsDB';
-
     static $types = ['file', 'url'];
     static $statues =  ['pending', 'processing', 'completed', 'failed'];
     static $FILE = 'file';
@@ -158,11 +155,25 @@ class Submission extends Model implements HasMedia
         $this->updateResults($results);
     }
 
-    public function updateOneTestResult($step_name, $test_name, $status, $output)
-    {
+    public function updateOneTestResult(
+        $step_name,
+        $test_name,
+        $status,
+        $output,
+        ?int $passedTests = null,
+        ?int $totalTests = null,
+        ?int $failedTests = null
+    ) {
         $results = $this->results;
         $results->$step_name->testResults->$test_name->status = $status;
         $results->$step_name->testResults->$test_name->output = $output;
+
+        if ($passedTests !== null && $totalTests !== null) {
+            $results->$step_name->testResults->$test_name->passedTests = $passedTests;
+            $results->$step_name->testResults->$test_name->totalTests = $totalTests;
+            $results->$step_name->testResults->$test_name->failedTests = $failedTests;
+        }
+
         $this->updateResults($results);
     }
 
@@ -192,8 +203,12 @@ class Submission extends Model implements HasMedia
             if (!$results) {
                 return $current_step;
             }
+
             foreach ($steps as $step) {
-                if ($results->{$step->executionStep->name}?->status == self::$PROCESSING || $results->{$step->executionStep->name}?->status == self::$PENDING) {
+                if (
+                    $results->{$step->executionStep->name}?->status == self::$PROCESSING ||
+                    $results->{$step->executionStep->name}?->status == self::$PENDING
+                ) {
                     $current_step = $step;
                     break;
                 }
@@ -201,16 +216,29 @@ class Submission extends Model implements HasMedia
 
             if (!$current_step) {
                 $have_failed_steps = false;
+                $all_completed = true;
+
                 foreach ($steps as $step) {
-                    if ($results->{$step->executionStep->name}?->status == self::$FAILED) {
-                        $have_failed_steps = true;
+                    if (
+                        !isset($results->{$step->executionStep->name}) ||
+                        $results->{$step->executionStep->name}?->status == self::$PENDING ||
+                        $results->{$step->executionStep->name}?->status == self::$PROCESSING
+                    ) {
+                        $all_completed = false;
                         break;
                     }
+
+                    if ($results->{$step->executionStep->name}?->status == self::$FAILED) {
+                        $have_failed_steps = true;
+                    }
                 }
-                if ($have_failed_steps) {
-                    $this->updateStatus(self::$FAILED);
-                } else {
-                    $this->updateStatus(self::$COMPLETED);
+
+                if ($all_completed) {
+                    if ($have_failed_steps) {
+                        $this->updateStatus(self::$FAILED);
+                    } else {
+                        $this->updateStatus(self::$COMPLETED);
+                    }
                 }
             }
 

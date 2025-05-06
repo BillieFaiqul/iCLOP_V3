@@ -3,13 +3,11 @@
 namespace App\Models\NodeJS;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;;
 
 class ProjectsDefaultFileStructure extends Model
 {
     use HasFactory;
-
-    protected $connection = 'nodejsDB';
 
     protected $fillable = [
         'project_id',

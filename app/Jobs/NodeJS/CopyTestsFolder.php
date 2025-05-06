@@ -41,36 +41,36 @@ class CopyTestsFolder implements ShouldQueue
         Log::info("Copying tests folder to {$this->tempDir}");
         $this->updateSubmissionStatus($submission, Submission::$PROCESSING, "Copying tests folder");
         try {
-            // processing
-            if (is_dir($this->tempDir . '/tests')) {
-                Log::info("Removing old tests folder from {$this->tempDir}");
-                Process::fromShellCommandline("rm -rf {$this->tempDir}/tests")->run();
+            // Ensure tests directory exists
+            if (!is_dir($this->tempDir . '/tests')) {
+                mkdir($this->tempDir . '/tests', 0777, true);
             }
-            mkdir($this->tempDir . '/tests', 0777, true);
-            mkdir($this->tempDir . '/tests/api', 0777, true);
-            mkdir($this->tempDir . '/tests/web', 0777, true);
-            mkdir($this->tempDir . '/tests/web/images', 0777, true);
-            foreach ($this->command as $key => $value) {
-                $process = new Process($value);
+
+            // Execute all commands to copy test files
+            foreach ($this->command as $command) {
+                $process = new Process($command);
                 $process->start();
                 $process_pid = $process->getPid();
                 $process->wait();
+
                 if ($process->isSuccessful()) {
-                    Log::info("Copied tests {$value[2]} folder to {$value[3]}");
+                    Log::info("Copied test file {$command[2]} to {$command[3]}");
                 } else {
-                    Log::error("Failed to copying tests {$value[2]} folder to {$value[3]}");
-                    $this->updateSubmissionStatus($submission, Submission::$FAILED, "Failed to copying tests folder");
+                    Log::error("Failed to copy test file {$command[2]} to {$command[3]}");
+                    Log::error("Error: " . $process->getErrorOutput());
+                    $this->updateSubmissionStatus($submission, Submission::$FAILED, "Failed to copy test files: " . $process->getErrorOutput());
                     Process::fromShellCommandline("rm -rf {$this->tempDir}")->run();
                     Process::fromShellCommandline('kill ' . $process_pid)->run();
                     throw new \Exception($process->getErrorOutput());
                 }
             }
+
             // completed
-            Log::info("Copied tests folder to {$this->tempDir}");
-            $this->updateSubmissionStatus($submission, Submission::$COMPLETED, "Copied tests folder");
+            Log::info("Copied all test files to {$this->tempDir}");
+            $this->updateSubmissionStatus($submission, Submission::$COMPLETED, "Copied test files successfully");
         } catch (\Throwable $th) {
-            Log::error("Failed to copying tests folder to {$this->tempDir} " . $th->getMessage());
-            $this->updateSubmissionStatus($submission, Submission::$FAILED, "Failed to copying tests folder");
+            Log::error("Failed to copy test files to {$this->tempDir}: " . $th->getMessage());
+            $this->updateSubmissionStatus($submission, Submission::$FAILED, "Failed to copy test files: " . $th->getMessage());
             Process::fromShellCommandline("rm -rf {$this->tempDir}")->run();
         }
     }
