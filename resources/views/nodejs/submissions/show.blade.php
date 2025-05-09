@@ -5,7 +5,18 @@
                 {{ __('All submissions for project: ') . $project->title }}
             </h2>
         </x-slot>
-
+        <div class="py-4">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <!-- Tips Alert for Dashboard -->
+            <x-alert.tips-alert pageId="submission-show" title="Tips untuk Anda">
+                <p>Selamat datang di Submission! Berikut adalah beberapa tips untuk membantu Anda:</p>
+                <ul class="list-disc pl-5 mt-2">
+                    <li>Klik "View" untuk melihat feedback atau error log dari sistem</li>
+                    <li>Klik "Download Results" untuk mengunduh laporan berupa json</li>
+                </ul>
+            </x-alert.tips-alert>
+        </div>
+        </div>
         <div class="py-5">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
