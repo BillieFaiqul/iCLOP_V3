@@ -30,7 +30,7 @@
                 <div class="mx-auto">
                     <ul class="navbar-nav mb-2 mb-lg-0 justify-content-center">
                         <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/dashboard-student">Dashboard Student</a>
+                        <a class="nav-link active" aria-current="page" href="#">Dashboard Teacher</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link active" aria-current="page" href="#">Tutorials</a>
@@ -47,7 +47,7 @@
                     <div class="dropdown-content" id="dropdownContent">
                         <form id="logout-form" action="{{ route('logoutt') }}" method="POST">
                             @csrf
-                            <a href="/" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         </form>
 
                     </div>
@@ -112,11 +112,11 @@
                             <img src={{asset("./images/book.png ")}} style="width: 13px; height: 16px;">
                         </div>
                         <div class="col">
-                            <p>18 learning topics</p>
+                            <p>{{ $topicCount ?? '0' }} learning topics</p>
                         </div>
                     </div>
                     <div style="margin-top: auto;">
-                        <a href="/nodejs/dashboard" class="btn btn-primary">Start Learning</a>
+                        <a href="{{ route('dashboard.nodejs.teacher') }}" class="btn btn-primary">Start Learning</a>
                     </div>
                 </div>
             </div>

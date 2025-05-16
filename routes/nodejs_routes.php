@@ -5,6 +5,8 @@ use App\Http\Controllers\NodeJS\Student\ProjectController;
 use App\Http\Controllers\NodeJS\Student\SubmissionController;
 use App\Http\Controllers\NodeJS\Student\WelcomeController;
 use App\Http\Controllers\NodeJS\Student\ProfileController;
+use App\Http\Controllers\NodeJS\Teacher\DashboardController as TeacherDashboardController;
+use App\Http\Controllers\NodeJS\Teacher\RankController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -14,11 +16,14 @@ Route::prefix('nodejs')->group(function () {
 
     Route::middleware('auth')->group(function () {
         // Dashboard
+        Route::get('/dashboard/teacher', [TeacherDashboardController::class, 'index'])->name('dashboard.nodejs.teacher');
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.nodejs');
+        
         // Profile
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        
         // Projects
         Route::prefix('projects')->controller(ProjectController::class)->group(function () {
             Route::get('/', 'index')->name('projects');
@@ -26,6 +31,7 @@ Route::prefix('nodejs')->group(function () {
             Route::get('/project/{project_id}/download', 'download')->name('projects.download');
             Route::get('pdf', 'showPDF')->name('projects.pdf');
         });
+        
         // Submissions
         Route::prefix('submissions')->group(function () {
             // show all the submission based on the projects
@@ -56,6 +62,18 @@ Route::prefix('nodejs')->group(function () {
             Route::get('/change/{submission_id}', [SubmissionController::class, 'changeSourceCode'])->name('submissions.changeSourceCode');
             // update source code based on the submission id
             Route::post('/update/submission', [SubmissionController::class, 'update'])->name('submissions.update');
+        });
+
+        // Teacher Rankings
+        Route::prefix('teacher/rank')->controller(RankController::class)->group(function () {
+            // Display ranking page
+            Route::get('/', 'index')->name('nodejs.teacher.rank');
+            // Get ranking data for a specific project
+            Route::get('/by-project', 'getRankingByProject')->name('nodejs.teacher.rank.by-project');
+            // Get all projects for the ranking dropdown
+            Route::get('/projects', 'getProjects')->name('nodejs.teacher.rank.projects');
+            // Export ranking data to CSV
+            Route::get('/export', 'exportRanking')->name('nodejs.teacher.rank.export');
         });
     });
 });
