@@ -4,7 +4,11 @@
         <div>
             <x-input-label for="project_id" :value="__('Select Project Before Uploading')" class="mb-2" />
             <select name="project_id" id="project_id"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-secondary-500 focus:border-secondary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-secondary-500 dark:focus:border-secondary-500">
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-secondary-500 focus:border-secondary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-secondary-500 dark:focus:border-secondary-500"
+                data-step="2"
+                data-intro="Pilih project yang ingin Anda kirimkan. Jika Anda sudah mengirimkan project ini sebelumnya, Anda tidak dapat mengirimkannya lagi."
+                data-title="Select Project"
+                data-disable-interaction="false">
                 <option value="">Select Project</option>
                 @foreach ($projects as $project)
                 @php
@@ -28,18 +32,30 @@
             </select>
             <x-input-error :messages="$errors->get('project_id')" class="mt-2" />
         </div>
-        <div class="mt-4">
+        <div class="mt-4" 
+            data-step="3"
+            data-intro="Upload file ZIP project Anda di sini. Pastikan file yang diunggah adalah file ZIP."
+            data-title="Upload ZIP File"
+            data-disable-interaction="false">
             <x-input-label for="folder" :value="__('Submit The Source Code')" class="mb-2" />
             <input type="file" name="folder_path" id="folder" data-allow-reorder="true" data-max-file-size="3MB" />
             <x-input-error :messages="$errors->get('folder')" class="mt-2" />
         </div>
-        <div class="mt-4">
+        <div class="mt-4"   
+            data-step="4"
+            data-intro="Jika Anda tidak ingin mengunggah file ZIP, Anda dapat memasukkan tautan ke repositori GitHub Anda di sini."
+            data-title="Or Github Link"
+            data-disable-interaction="false">
             <x-input-label for="github_url" :value="__('Or Github Link')" />
             <x-text-input id="github_url" class="block mt-1 w-full" type="text" name="github_url"
                 :value="old('github_url')" placeholder="E.g. https://github.com/username/repository.git" />
             <x-input-error :messages="$errors->get('github_url')" class="mt-2" />
         </div>
-        <div class="flex items-center justify-end mt-12">
+        <div class="flex items-center justify-end mt-12"       
+            data-step="5"
+            data-intro="Klik tombol 'Submit' untuk mengirimkan project Anda."
+            data-title="Submit Project"
+            data-disable-interaction="false">
             <x-primary-button class="ml-4">
                 {{ __('Submit') }}
             </x-primary-button>

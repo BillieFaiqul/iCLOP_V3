@@ -11,6 +11,7 @@
     <tbody>
     </tbody>
 </table>
+
 @section('scripts')
 <script type="text/javascript">
     function requestServer(element){
@@ -102,7 +103,6 @@
                 });
                 break;
             case "change-source-code":
-                // redirect to change source code page
                 window.location = '/nodejs/submissions/change/' + submission_id;
                 break;
             default:
@@ -110,40 +110,79 @@
         }
     }
 
-
     $(function () {
-    var table = $('#submissions_table').DataTable({
-        "processing": true,
-        "retrieve": true,
-        "serverSide": true,
-        'paginate': true,
-        "bDeferRender": true,
-        "responsive": true,
-        "autoWidth": false,
-        "bLengthChange" : false,
-        "aaSorting": [],
-        "lengthMenu": [5],
-        "searching": false,
-        "info" : false,
-        language: {
-            search: "_INPUT_",
-            searchPlaceholder: "Search",
-            "paginate": {
-                "previous": "<",
-                "next": ">",
+        var table = $('#submissions_table').DataTable({
+            "processing": true,
+            "retrieve": true,
+            "serverSide": true,
+            'paginate': true,
+            "bDeferRender": true,
+            "responsive": true,
+            "autoWidth": false,
+            "bLengthChange" : false,
+            "aaSorting": [],
+            "lengthMenu": [5],
+            "searching": false,
+            "info" : false,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search",
+                "paginate": {
+                    "previous": "<",
+                    "next": ">",
+                },
             },
-        },
-        ajax: "{{ route('submissions') }}",
-        columns: [
-            {data: 'title', name: 'title', orderable: true, searchable: true},
-            // {data: 'submission_count', name: 'submission_count', orderable: true, searchable: false, className: "text-center"},
-            {data: 'attempts_count', name: 'attempts_count', orderable: true, searchable: false, className: "text-center"},
-            {data: 'submission_status', name: 'submission_status', orderable: true, searchable: true, className: "text-center"},
-            {data: 'action', name: 'action', orderable: false, searchable: false, className: "text-center"},
-        ]
+            ajax: "{{ route('submissions') }}",
+            columns: [
+                {
+                    data: 'title',
+                    name: 'title',
+                    orderable: true,
+                    searchable: true,
+                    createdCell: function (td) {
+                        $(td).attr({
+                            'data-step': '1',
+                            'data-intro': 'Klik Tittle Project untuk melihat lebih detail submission, anda dapat dapat melihat detail pengujian dan mendownload hasil pengujiannya.',
+                            'data-title': 'Submission Detail',
+                            'data-position': 'right',
+                            'data-disable-interaction': 'false'
+                        });
+                    }
+                },
+                {
+                    data: 'attempts_count',
+                    name: 'attempts_count',
+                    orderable: true,
+                    searchable: false,
+                    className: "text-center"
+                },
+                {
+                    data: 'submission_status',
+                    name: 'submission_status',
+                    orderable: true,
+                    searchable: true,
+                    className: "text-center"
+                },
+                {
+                    data: 'action',
+                    name: 'action',
+                    orderable: false,
+                    searchable: false,
+                    className: "text-center",
+                    createdCell: function (td) {
+                        $(td).attr({
+                            'data-step': '2',
+                            'data-intro': 'Jika anda sudah mensubmit sebuah project, anda dapat mengulang dan menghapus submission project tersebut dengan mengklik tombol yang muncul disini.',
+                            'data-title': 'Submission Action',
+                            'data-position': 'right',
+                            'data-disable-interaction': 'false'
+                        });
+                    }
+                },
+            ]
+        });
     });
-  });
 
-  $('#submissions_table_paginate > span > a').addClass('bg-gray-900 text-gray-300');
+    $('#submissions_table_paginate > span > a').addClass('bg-gray-900 text-gray-300');
 </script>
 @endsection

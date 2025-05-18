@@ -116,7 +116,7 @@
                 success: function(response) {
                     if (response.status === 'success') {
                         const projects = response.data.projects;
-                        let options = '<option value="">Pilih Proyek</option>';
+                        let options = '<option value="">Select Project</option>';
                         
                         projects.forEach(project => {
                             options += `<option value="${project.id}">${project.title}</option>`;

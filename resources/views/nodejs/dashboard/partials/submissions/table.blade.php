@@ -1,4 +1,8 @@
-<table class="table" id="submissions_table">
+<table class="table" id="submissions_table"
+       data-step="6"
+       data-intro="Tekan title dari project untuk melihat detail dari submission anda."
+       data-title="Submission Table"
+       data-disable-interaction="false">
     <thead>
         <tr>
             <th>Title</th>
