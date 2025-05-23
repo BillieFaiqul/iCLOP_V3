@@ -5,7 +5,7 @@
                 {{ __('Dashboard') }}
             </h2>
             <button id="resetIntroBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                <i class="fas fa-question-circle mr-1"></i> Lihat Tutorial
+                <i class="fas fa-question-circle mr-1"></i>Tutorial
             </button>
         </div>
     </x-slot>

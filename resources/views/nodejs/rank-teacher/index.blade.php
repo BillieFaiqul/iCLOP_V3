@@ -162,7 +162,7 @@
                 },
                 error: function(xhr) {
                     console.error('Error loading rankings', xhr);
-                    alert('Gagal memuat peringkat. Silakan coba lagi.');
+                    alert('Failed to load ranking. Please try again..');
                 },
                 complete: function() {
                     $('#loading').hide();

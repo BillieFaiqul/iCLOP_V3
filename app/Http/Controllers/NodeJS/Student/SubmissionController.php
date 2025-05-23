@@ -169,7 +169,7 @@ class SubmissionController extends Controller
 
                 if ($temporary_file) {
                     $path = storage_path('app/' . $request->folder_path . '/' . $temporary_file->file_name);
-                    $submission->addMedia($path)->toMediaCollection('submissions', 'public_submissions_files');
+                    $submission->addMedia($path)->toMediaCollection('submissions', 'nodejs_public_submissions_files');
                     if ($this->is_dir_empty(storage_path('app/' . $request->folder_path))) {
                         rmdir(storage_path('app/' . $request->folder_path));
                     }
