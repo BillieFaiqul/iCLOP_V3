@@ -11,7 +11,9 @@
         @php
         $guidesCount = count($project->getMedia('project_guides'));
         $supplementsCount = count($project->getMedia('project_supplements'));
-        $testsCount = count($project->getMedia('project_tests_api')) + count($project->getMedia('project_tests_web'));
+        $testsIndividualCount = count($project->getMedia('project_tests'));
+        $testsZipExists = $project->getMedia('project_zips')->where('file_name', 'tests.zip')->first();
+        $testsCount = $testsIndividualCount > 0 || $testsZipExists ? max($testsIndividualCount, 1) : 0;
         @endphp
         <div>
             @if ($guidesCount > 0)

@@ -126,10 +126,29 @@ class SubmissionController extends Controller
     {
         if ($request->hasFile('folder_path')) {
             $project_title = Project::find($project_id)->title;
+            $project_title = str_replace([' ', '/', '\\'], '-', $project_title);
 
             $file = $request->file('folder_path');
             $file_name = $file->getClientOriginalName();
             $folder_path = 'public/tmp/submissions/' . $request->user()->id . '/' . $project_title;
+            
+            // Hapus temporary file lama jika ada
+            TemporaryFile::where('folder_path', $folder_path)->delete();
+            
+            // Hapus folder lama jika ada
+            $full_folder_path = storage_path('app/' . $folder_path);
+            if (is_dir($full_folder_path)) {
+                // Hapus semua file di folder
+                $files = glob($full_folder_path . '/*');
+                foreach($files as $file_to_delete) {
+                    if(is_file($file_to_delete)) {
+                        unlink($file_to_delete);
+                    }
+                }
+                rmdir($full_folder_path);
+            }
+            
+            // Upload file baru
             $file->storeAs($folder_path, $file_name);
 
             TemporaryFile::create([
@@ -144,7 +163,6 @@ class SubmissionController extends Controller
 
     public function submit(Request $request)
     {
-
         try {
             $request->validate([
                 'project_id' => 'required|exists:projects,id',
@@ -161,34 +179,55 @@ class SubmissionController extends Controller
             $submission = new Submission();
             $submission->user_id = $request->user()->id;
             $submission->project_id = $request->project_id;
+            
             if ($request->has('folder_path')) {
                 $submission->type = Submission::$FILE;
                 $submission->path = $request->folder_path;
 
                 $temporary_file = TemporaryFile::where('folder_path', $request->folder_path)->first();
-
-                if ($temporary_file) {
-                    $path = storage_path('app/' . $request->folder_path . '/' . $temporary_file->file_name);
-                    $submission->addMedia($path)->toMediaCollection('submissions', 'nodejs_public_submissions_files');
-                    if ($this->is_dir_empty(storage_path('app/' . $request->folder_path))) {
-                        rmdir(storage_path('app/' . $request->folder_path));
-                    }
-                    $temporary_file->delete();
+                
+                // Debug: Cek apakah temporary file ada
+                if (!$temporary_file) {
+                    \Log::error('TemporaryFile not found for folder_path: ' . $request->folder_path);
+                    return response()->json(['message' => 'Temporary file not found'], 400);
                 }
+
+                $file_path = storage_path('app/' . $request->folder_path . '/' . $temporary_file->file_name);
+                
+                // Debug: Cek apakah file fisik ada
+                if (!file_exists($file_path)) {
+                    \Log::error('Physical file not found: ' . $file_path);
+                    return response()->json(['message' => 'Physical file not found'], 400);
+                }
+
+                try {
+                    $submission->addMedia($file_path)->toMediaCollection('submissions', 'nodejs_public_submissions_files');
+                } catch (\Exception $e) {
+                    \Log::error('Media collection error: ' . $e->getMessage());
+                    return response()->json(['message' => 'Failed to add media: ' . $e->getMessage()], 500);
+                }
+
+                // Cleanup
+                if ($this->is_dir_empty(storage_path('app/' . $request->folder_path))) {
+                    rmdir(storage_path('app/' . $request->folder_path));
+                }
+                $temporary_file->delete();
             } else {
                 $submission->type = Submission::$URL;
                 $submission->path = $request->github_url;
             }
+            
             $submission->status = Submission::$PENDING;
             $submission->start = now();
             $submission->save();
-
 
             return response()->json([
                 'message' => 'Submission created successfully',
                 'submission' => $submission,
             ], 201);
+            
         } catch (\Throwable $th) {
+            \Log::error('Submission error: ' . $th->getMessage() . ' | Line: ' . $th->getLine() . ' | File: ' . $th->getFile());
             return response()->json([
                 'message' => 'Submission failed',
                 'error' => $th->getMessage(),
@@ -707,7 +746,7 @@ class SubmissionController extends Controller
         $user = Auth::user();
         $submission = Submission::where('id', $submission_id)->where('user_id', $user->id)->first();
         if ($submission) {
-            return view('submissions.change_source_code', compact('submission'));
+            return view('nodejs.submissions.change_source_code', compact('submission'));
         }
         return redirect()->route('submissions');
     }
@@ -747,7 +786,7 @@ class SubmissionController extends Controller
 
                 if ($temporary_file) {
                     $path = storage_path('app/' . $request->folder_path . '/' . $temporary_file->file_name);
-                    $submission->addMedia($path)->toMediaCollection('submissions', 'public_submissions_files');
+                    $submission->addMedia($path)->toMediaCollection('submissions', 'nodejs_public_submissions_files');
                     if ($this->is_dir_empty(storage_path('app/' . $request->folder_path))) {
                         rmdir(storage_path('app/' . $request->folder_path));
                     }

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\NodeJS;
 
-use App\Models\ExecutionStep;
-use App\Models\Submission;
+use App\Models\NodeJS\ExecutionStep;
+use App\Models\NodeJS\Submission;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

@@ -10,7 +10,7 @@ use App\Models\NodeJS\ProjectsDefaultFileStructure;
 use App\Models\NodeJS\ExecutionStep;
 use App\Models\NodeJS\ProjectExecutionStep;
 
-class NodeJS_Seeder extends Seeder
+class NodeJSSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -179,7 +179,8 @@ class NodeJS_Seeder extends Seeder
         //zips
         $project_asynchronous_programming->addMedia(storage_path('projects/asynchronous-programming/zips/guides.zip'))->preservingOriginal()->toMediaCollection('project_zips', 'nodejs_public_projects_files');
         $project_asynchronous_programming->addMedia(storage_path('projects/asynchronous-programming/zips/supplements.zip'))->preservingOriginal()->toMediaCollection('project_zips', 'nodejs_public_projects_files');
-
+        $project_asynchronous_programming->addMedia(storage_path('projects/asynchronous-programming/zips/tests.zip'))->preservingOriginal()->toMediaCollection('project_zips', 'nodejs_public_projects_files');
+        
         //tests
         $project_asynchronous_programming->addMedia(storage_path('projects/asynchronous-programming/tests/unit/modul1-unit.test.js'))->preservingOriginal()->toMediaCollection('project_tests', 'nodejs_public_projects_files');
         $project_asynchronous_programming->addMedia(storage_path('projects/asynchronous-programming/tests/unit/modul2-unit.test.js'))->preservingOriginal()->toMediaCollection('project_tests', 'nodejs_public_projects_files');

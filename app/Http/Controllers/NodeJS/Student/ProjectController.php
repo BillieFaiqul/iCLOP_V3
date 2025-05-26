@@ -119,54 +119,42 @@ class ProjectController extends Controller
                         if ($zipMedia) {
                             return response()->json($zipMedia->getUrl(), 200);
                         } else {
-                            $tests_api = $project->getMedia('project_tests_api');
-                            $tests_web = $project->getMedia('project_tests_web');
-                            $tests_images = $project->getMedia('project_tests_images');
+                            // Perbaiki collection name sesuai database
+                            $tests = $project->getMedia('project_tests');
+
+                            // Tambahkan pengecekan apakah ada file tests
+                            if (count($tests) === 0) {
+                                return response()->json(["message" => "no tests available"], 404);
+                            }
 
                             $tempDir = storage_path('app/public/assets/projects/' . $project->title . '/zips');
                             if (!is_dir($tempDir)) mkdir($tempDir);
-                            if (!is_dir($tempDir . '/tests')) mkdir($tempDir . '/tests');
-                            if (!is_dir($tempDir . '/tests/api')) mkdir($tempDir . '/tests/api');
-                            if (!is_dir($tempDir . '/tests/web')) mkdir($tempDir . '/tests/web');
-                            if (!is_dir($tempDir . '/tests/web/images')) mkdir($tempDir . '/tests/web/images');
 
-                            foreach ($tests_api as $test) {
+                            // Copy semua file tests ke tempDir
+                            foreach ($tests as $test) {
                                 $path = $test->getPath();
                                 $filename = $test->file_name;
-                                copy($path, $tempDir . '/tests/api/' . $filename);
-                            }
-                            foreach ($tests_web as $test) {
-                                $path = $test->getPath();
-                                $filename = $test->file_name;
-                                copy($path, $tempDir . '/tests/web/' . $filename);
-                            }
-                            foreach ($tests_images as $test) {
-                                $path = $test->getPath();
-                                $filename = $test->file_name;
-                                copy($path, $tempDir . '/tests/web/images/' . $filename);
+                                copy($path, $tempDir . '/' . $filename);
                             }
 
                             $zipPath = $tempDir . '/tests.zip';
                             $zip = new ZipArchive;
                             if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
-                                $zip->addEmptyDir('api');
-                                $zip->addEmptyDir('web');
-                                $zip->addEmptyDir('web/images');
-                                $api_files = Storage::files('public/assets/projects/' . $project->title . '/zips/tests/api');
-                                foreach ($api_files as $file) {
-                                    $zip->addFile(storage_path('app/' . $file), 'api/' . basename($file));
+                                $files = Storage::files('public/assets/projects/' . $project->title . '/zips');
+                                foreach ($files as $file) {
+                                    // Skip jika file adalah zip itu sendiri
+                                    if (basename(storage_path('app/' . $file)) !== 'tests.zip') {
+                                        $zip->addFile(storage_path('app/' . $file), basename($file));
+                                    }
                                 }
-                                $api_files = Storage::files('public/assets/projects/' . $project->title . '/zips/tests/web');
-                                foreach ($api_files as $file) {
-                                    $zip->addFile(storage_path('app/' . $file), 'web/' . basename($file));
-                                }
-                                $image_files = Storage::files('public/assets/projects/' . $project->title . '/zips/tests/web/images');
-                                foreach ($image_files as $file) {
-                                    $zip->addFile(storage_path('app/' . $file), 'web/images/' . basename($file));
-                                }
-
                                 $zip->close();
-                                Process::fromShellCommandline("rm -rf {$tempDir}/tests")->run();
+                                
+                                // Hapus file individual setelah di-zip
+                                foreach ($files as $file) {
+                                    if (basename(storage_path('app/' . $file)) !== 'tests.zip') {
+                                        unlink(storage_path('app/' . $file));
+                                    }
+                                }
                             } else {
                                 throw new Exception('Failed to create zip archive');
                             }
