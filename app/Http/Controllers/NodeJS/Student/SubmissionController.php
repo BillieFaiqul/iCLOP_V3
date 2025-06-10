@@ -126,29 +126,10 @@ class SubmissionController extends Controller
     {
         if ($request->hasFile('folder_path')) {
             $project_title = Project::find($project_id)->title;
-            $project_title = str_replace([' ', '/', '\\'], '-', $project_title);
 
             $file = $request->file('folder_path');
             $file_name = $file->getClientOriginalName();
             $folder_path = 'public/tmp/submissions/' . $request->user()->id . '/' . $project_title;
-            
-            // Hapus temporary file lama jika ada
-            TemporaryFile::where('folder_path', $folder_path)->delete();
-            
-            // Hapus folder lama jika ada
-            $full_folder_path = storage_path('app/' . $folder_path);
-            if (is_dir($full_folder_path)) {
-                // Hapus semua file di folder
-                $files = glob($full_folder_path . '/*');
-                foreach($files as $file_to_delete) {
-                    if(is_file($file_to_delete)) {
-                        unlink($file_to_delete);
-                    }
-                }
-                rmdir($full_folder_path);
-            }
-            
-            // Upload file baru
             $file->storeAs($folder_path, $file_name);
 
             TemporaryFile::create([
@@ -770,12 +751,6 @@ class SubmissionController extends Controller
                 $submission->getMedia('submissions')->each(function ($media) {
                     $media->delete();
                 });
-            }
-
-            // delete temp directory if is not empty
-            $tempDir = $this->getTempDir($submission);
-            if (!$this->is_dir_empty($tempDir)) {
-                Process::fromShellCommandline('rm -rf ' . $tempDir)->run();
             }
 
             if ($request->has('folder_path')) {
