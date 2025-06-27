@@ -23,7 +23,7 @@ use App\Http\Controllers\SocialController;
 // Route::get('/', function () {
 //     return view('welcome');
 // });
-
+Route::get('/p', [AuthController::class, 'logout']);
 Route::post('/login',[AuthController::class,'proses'])->name('login');
 Route::post('/signup',[AuthController::class,'signup'])->name('post_signup');
 Route::get('/auth/redirect', action:[AuthController::class, 'redirect'])->name(name:'google.redirect');
@@ -43,9 +43,9 @@ Route::get('/signup', function () {
     return view('signup');
 })->name('signup');
 
-Route::post('/logoutt', [AuthController::class, 'logoutt'])
-    ->name('logoutt');
-Route::get('/logout', [AuthController::class, 'logoutt'])
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->name('logout');
+Route::get('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
 // Route::group(["prefix" => 'test', 'middleware' => ['login'],  'as' => 'test.'], function(){
