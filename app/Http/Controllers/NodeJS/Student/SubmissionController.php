@@ -682,9 +682,18 @@ class SubmissionController extends Controller
             if ($request->submission_id == null) return response()->json([
                 'message' => 'Submission ID is required',
             ], 404);
+            
             $user = Auth::user();
             $submission = Submission::where('id', $request->submission_id)->where('user_id', $user->id)->first();
+            
             if ($submission) {
+                // Check if attempts count is 3 or more
+                if ($submission->attempts >= 3) {
+                    return response()->json([
+                        'message' => 'Maximum attempts reached. Cannot restart submission.',
+                    ], 403);
+                }
+                
                 $submission->createHistory("Submission has been restarted");
 
                 if ($submission->port != null) {
@@ -697,6 +706,7 @@ class SubmissionController extends Controller
                         ['rm', '-rf', $this->getTempDir($submission)],
                     ];
                 }
+                
                 // Delete temp directory
                 foreach ($commands as $command) {
                     if (!$this->is_dir_empty($this->getTempDir($submission))) {
@@ -716,6 +726,7 @@ class SubmissionController extends Controller
                     'message' => 'Submission has been restarted successfully',
                 ], 200);
             }
+            
             return response()->json([
                 'message' => 'Submission not found',
             ], 404);
@@ -726,9 +737,18 @@ class SubmissionController extends Controller
     {
         $user = Auth::user();
         $submission = Submission::where('id', $submission_id)->where('user_id', $user->id)->first();
+        
         if ($submission) {
+            // Check if attempts count is 3 or more
+            if ($submission->attempts >= 3) {
+                return response()->json([
+                    'message' => 'Maximum attempts reached. Cannot change source code.',
+                ], 403);
+            }
+            
             return view('nodejs.submissions.change_source_code', compact('submission'));
         }
+        
         return redirect()->route('submissions');
     }
 

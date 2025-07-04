@@ -14,7 +14,7 @@
 
 @section('scripts')
 <script type="text/javascript">
-    function requestServer(element){
+   function requestServer(element){
         let submission_id = element.attr('data-submission-id');
         let request_type = element.attr('data-request-type');
 
@@ -89,21 +89,74 @@
                                     window.location = "/nodejs/submissions";
                                 });
                             },
-                            error: function(data) {
+                            error: function(xhr, status, error) {
+                                let errorMessage = "Something went wrong!";
+                                
+                                console.log("Error status:", xhr.status);
+                                console.log("Error response:", xhr.responseText);
+                                
+                                // Check if it's a 403 error (maximum attempts reached)
+                                if (xhr.status === 403) {
+                                    try {
+                                        let response = JSON.parse(xhr.responseText);
+                                        errorMessage = response.message || "Maximum attempts reached. Cannot restart submission.";
+                                    } catch (e) {
+                                        errorMessage = "Maximum attempts reached. Cannot restart submission.";
+                                    }
+                                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
+                                
                                 swal({
                                     title: "Error!",
-                                    text: "Something went wrong!",
+                                    text: errorMessage,
                                     icon: "error",
                                     button: "Ok",
                                 });
-                                console.log(data);
                             }
                         });
                     }
                 });
                 break;
             case "change-source-code":
-                window.location = '/nodejs/submissions/change/' + submission_id;
+                // First check if attempts limit is reached via AJAX
+                $.ajax({
+                    url: '/nodejs/submissions/change/' + submission_id,
+                    type: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token()}}'
+                    },
+                    success: function(data) {
+                        // If successful, redirect to the change source code page
+                        window.location = '/nodejs/submissions/change/' + submission_id;
+                    },
+                    error: function(xhr, status, error) {
+                        // Handle 403 error (maximum attempts reached)
+                        if (xhr.status === 403) {
+                            let errorMessage = "Maximum attempts reached. Cannot change source code.";
+                            try {
+                                let response = JSON.parse(xhr.responseText);
+                                errorMessage = response.message || errorMessage;
+                            } catch (e) {
+                                // Use default message if parsing fails
+                            }
+                            
+                            swal({
+                                title: "Error!",
+                                text: errorMessage,
+                                icon: "error",
+                                button: "Ok",
+                            });
+                        } else {
+                            swal({
+                                title: "Error!",
+                                text: "Something went wrong!",
+                                icon: "error",
+                                button: "Ok",
+                            });
+                        }
+                    }
+                });
                 break;
             default:
                 break;
