@@ -25,7 +25,7 @@ class RankController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getRankingByProject(Request $request)
+   public function getRankingByProject(Request $request)
     {
         $projectId = $request->input('project_id');
         
@@ -79,13 +79,22 @@ class RankController extends Controller
                 }
             }
 
-            // Calculate percentage score
+            // Calculate percentage score and round to nearest integer
             $score = $totalTests > 0 ? ($passedTests / $totalTests) * 100 : 0;
-            $score = round($score, 2); // Round to 2 decimal places
+            $score = round($score, 0); // Round to nearest integer
 
             // If we already processed this user, only keep the higher score
+            // If scores are equal, keep the one with fewer attempts
             if (isset($processedUsers[$userId])) {
+                $shouldReplace = false;
+                
                 if ($score > $processedUsers[$userId]['score']) {
+                    $shouldReplace = true;
+                } elseif ($score == $processedUsers[$userId]['score'] && $submission->attempts < $processedUsers[$userId]['attempts']) {
+                    $shouldReplace = true;
+                }
+                
+                if ($shouldReplace) {
                     $processedUsers[$userId] = [
                         'user_id' => $userId,
                         'user_name' => $submission->user_name,
@@ -109,14 +118,21 @@ class RankController extends Controller
             }
         }
 
-        // Convert to array and sort by score (descending)
+        // Convert to array and sort by score (descending), then by attempts (ascending), then by submission date (ascending)
         $rankings = array_values($processedUsers);
         usort($rankings, function($a, $b) {
-            if ($a['score'] == $b['score']) {
-                // If scores are equal, sort by submission date (earlier is better)
-                return strtotime($a['submission_date']) - strtotime($b['submission_date']);
+            // First priority: score (higher is better)
+            if ($a['score'] != $b['score']) {
+                return $b['score'] - $a['score'];
             }
-            return $b['score'] - $a['score'];
+            
+            // Second priority: attempts (fewer is better)
+            if ($a['attempts'] != $b['attempts']) {
+                return $a['attempts'] - $b['attempts'];
+            }
+            
+            // Third priority: submission date (earlier is better)
+            return strtotime($a['submission_date']) - strtotime($b['submission_date']);
         });
 
         // Add rank information
