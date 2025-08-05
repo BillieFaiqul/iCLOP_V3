@@ -106,7 +106,7 @@
             <div class="card p-0" style="width: 305px; height:375px; margin-left: 25px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
                 <img src={{asset("./images/cards/Node.js.png")}} class="card-img-top" style="width: auto; height: 200px;">
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">Backend Web with Node.JS</h5>
+                    <h5 class="card-title">Web Application  With NodeJS</h5>
                     <div class="row align-items-start">
                         <div class="col-1">
                             <img src={{asset("./images/book.png ")}} style="width: 13px; height: 16px;">
